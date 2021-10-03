@@ -429,8 +429,6 @@ def wrap_experience_replay(exp_buffer, config,
         action_num_limit=config.max_template_num,
         action_length_limit=config.max_template_len,
         batch_size=config.batch_size)
-    import pdb 
-    pdb.set_trace()
     exp_buff_loader = torch.utils.data.DataLoader(
         exp_dataset, batch_size=config.batch_size, shuffle=False,
         collate_fn=exp_dataset.collate_fn, drop_last=False, **kwargs)
