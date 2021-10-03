@@ -1,5 +1,4 @@
 .DS_Store
-roms/
 __pycache__/
 glove/
 wandb

@@ -14,10 +14,9 @@
 #SBATCH -N 1 #nodes
 #SBATCH -n 1 #tasks
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=15G
-#SBATCH --time=1-23:59:00   
+#SBATCH --mem=11G
+#SBATCH --time=0-23:59:00   
 #SBATCH --gres=gpu:1 
-#SBATCH -w node031
 
 # Turn on mail notification. There are many possible self-explaining values:
 # NONE, BEGIN, END, FAIL, ALL (including all aforementioned)
@@ -37,7 +36,7 @@ version=4
 
 module purge
 eval "$(conda shell.bash hook)"
-if [ ${2} = "zork1.z5" ]; then
+if [ ${1} = "zork1.z5" ]; then
     echo "activating drrn-shunyu-fast"
     conda activate drrn-shunyu-fast
 elif [ ${4} = "add_wt" ]; then
@@ -49,13 +48,13 @@ elif [ ${4} = "no_add_wt" ]; then
 else
     echo "Unrecognized wt type!"
     exit 1
-fi
+fi 
 
 export WANDB_TAGS=$SLURM_JOB_ID
 
 python3 train.py --env_id ${2} \
                  --batch_size 64 \
-                 --env_seed ${3} \
+                 --env_seed -1 \
                  --seed ${3} \
                  --project_name "iclr-text-games" \
                  --jericho_add_wt ${4} \
@@ -65,7 +64,7 @@ python3 train.py --env_id ${2} \
 #                  --batch_size 64 \
 #                  --env_seed -1 \
 #                  --seed 0 \
-#                  --project_name "iclr-text-games" \
+#                  --project_name "text-games" \
 #                  --jericho_add_wt add_wt \
 #                  --log_dir logs/mprc-dqn-test
 

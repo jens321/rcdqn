@@ -8,18 +8,18 @@
 # jericho_add_wt="no_add_wt"
 
 # WT_SLOW_GAMES
-GAMES="library.z5 deephome.z5 enchanter.z3"
-jericho_add_wt="add_wt"
+# GAMES="library.z5 deephome.z5 enchanter.z3"
+# jericho_add_wt="add_wt"
 
 # NO_WT_SLOW_GAMES
 # GAMES="library.z5 deephome.z5 enchanter.z3 dragon.z5"
 # jericho_add_wt="no_add_wt"
 
 # CUSTOM
-# GAMES="inhumane.z5"
-# jericho_add_wt="add_wt"
+GAMES="library.z5"
+jericho_add_wt="add_wt"
 
-SEEDS=(0 1 2)
+SEEDS=(1)
 
 for seed in ${SEEDS[@]}
 do
