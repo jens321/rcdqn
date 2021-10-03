@@ -222,9 +222,9 @@ def train():
 
         watch_end = time.time()
 
-        model.save_networks()
-        model.save_optimizer()
-        model.save_replay()
+        # model.save_networks()
+        # model.save_optimizer()
+        # model.save_replay()
 
         e_r, score = monitor.get_episode_reward_record()
         action_record = monitor.get_action_record()
@@ -264,7 +264,7 @@ def train():
         print('- act time:{}'.format(timedelta(milliseconds=act_time)))
         act_time = 0
 
-    model.save_checkpoint()
+    # model.save_checkpoint()
     env.close()
 
 
