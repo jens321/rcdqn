@@ -1,6 +1,10 @@
 import os
 from jericho.util import clean
 from tqdm import tqdm
+import wandb
+import torch
+import numpy as np
+import random
 import time
 from datetime import timedelta
 from timeit import default_timer as timer
@@ -11,8 +15,16 @@ import utils
 def train():
     # initialize environments and set up logging folders
     config = utils.get_rl_args()
+    wandb.init(project=f'{config.project_name}', name=config.log_dir.split('/')[-1])
+    wandb.config.update(config)
+    wandb.run.tags = wandb.run.tags + (config.jericho_add_wt,)
     rom = config.rom_path.format(config.env_id)
-    env = utils.make_env(rom, 0, max_episode_steps=config.env_step_limit)
+    env = utils.make_env(rom, config.env_seed, max_episode_steps=config.env_step_limit)
+
+    # Set seed across imports
+    torch.manual_seed(config.seed)
+    np.random.seed(config.seed)
+    random.seed(config.seed)
 
     frame_idx = 0
     resume_flag = False
@@ -138,7 +150,7 @@ def train():
         # tracking behavior trajectories
         monitor.add_ard(frame_idx, actions[action_id], reward, done, prob)
 
-        if done or env.env.emulator_halted():
+        if done or env.env._emulator_halted():
             score = next_info['score']
             model.reset_hx()
             next_obs_text, next_info = env.reset(parallel=True)
@@ -189,7 +201,9 @@ def train():
     loop_length = config.experiment_monitor_freq * config.update_freq
     loop_start = frame_idx // loop_length
     loop_max = int(config.max_steps / loop_length) + 1
+    max_score = 0
     for loop_idx in range(loop_start, loop_max):
+        watch_start = time.time()
         time_start = loop_idx * loop_length
         time_end = time_start + loop_length
         for batch_vars in tqdm(
@@ -205,6 +219,8 @@ def train():
                 obs_ids, action_tuple = actor_step(obs_ids, action_tuple, frame_idx)
                 frame_idx += 1
             act_time += int(round(time.time() * 1000)) - act_ep_time
+
+        watch_end = time.time()
 
         model.save_networks()
         model.save_optimizer()
@@ -238,6 +254,11 @@ def train():
                         td_avg, td_max, norm_avg,
                         config.epsilon_by_frame(frame_idx),
                         exp_avg, exp_max, exp_min))
+
+        max_score = max(max_score, score[1])
+
+        wandb.log({'Step': frame_idx, 'EpisodeScores100': score[0], 'MaxScore': max_score, 'FPS': 8 * loop_length/(watch_end - watch_start)})
+
         model.print_time_log()
         model.reset_time_log()
         print('- act time:{}'.format(timedelta(milliseconds=act_time)))

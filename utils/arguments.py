@@ -13,10 +13,11 @@ def get_rl_args():
     parser = argparse.ArgumentParser(description='DRL for IF Games')
 
     # env configuration
-    parser.add_argument('--rom_path', default='./roms/jericho-game-suite/{}')
+    parser.add_argument('--rom_path', default='./roms/games/{}')
     parser.add_argument('--env_id', default='zork1.z5')
     parser.add_argument('--env_step_limit', default=100, type=int)
     parser.add_argument('--env_seed', default=12, type=int)
+    parser.add_argument('--seed', default=0, type=int)
     parser.add_argument('--mode', default='train', choices=['train', 'eval'])
     parser.add_argument('--observe_act', action='store_true')
     parser.add_argument('--resume_folder', default='',
@@ -78,6 +79,10 @@ def get_rl_args():
     parser.add_argument('--no_cuda', action='store_true')
     parser.add_argument('--grad_clip', default=10.0, type=float)
     parser.add_argument('--history_window', default=2, type=int)
+
+    parser.add_argument('--jericho_add_wt', default='add_wt', type=str)
+    parser.add_argument('--project_name', default='text-games', type=str)
+
 
     args = parser.parse_args()
 

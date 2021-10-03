@@ -26,6 +26,7 @@ def make_env(rom_path, seed, max_episode_steps=None, use_parallel_envs=True):
         import multiprocessing
         num_workers = multiprocessing.cpu_count()
         num_workers = int(num_workers - 4)
+        num_workers = min(num_workers, 16)
     else:
         num_workers = 0
     env = JerichoEnv(rom_path, seed, max_episode_steps, env_num=num_workers)
@@ -37,7 +38,7 @@ def _check_valid_action_operator(env, state, chunk):
     if not bool(chunk):
         return diff2acts
 
-    if env.emulator_halted():
+    if env._emulator_halted():
         env.reset()
 
     env.set_state(state)
@@ -50,11 +51,11 @@ def _check_valid_action_operator(env, state, chunk):
         else:
             obs, rew, done, info = env.step(act)
 
-        if env.emulator_halted():
+        if env._emulator_halted():
             env.reset()
             continue
 
-        if info['score'] != orig_score or done or env.world_changed():
+        if info['score'] != orig_score or done or env._world_changed():
             if '(Taken)' in obs:
                 continue
             diff = env._get_world_diff()
@@ -91,11 +92,13 @@ class JerichoEnv:
     def __init__(self, rom_path, seed, step_limit=None, env_num=8):
         self.rom_path = rom_path
         self.seed = seed
+        self.env = FrotzEnv(self.rom_path, self.seed)
+        self.bindings = self.env.bindings
 
         self.step_limit = step_limit
 
-        self.bindings = load_bindings(rom_path)
-        self.seed = self.bindings['seed']
+        # self.bindings = load_bindings(rom_path)
+        # self.seed = self.bindings['seed']
         # some additional templates here, could make it game specific
         # Note: changes to it may cause the template id inconsistent
         self.additional_templates = ['land']
@@ -106,7 +109,8 @@ class JerichoEnv:
         self.id2template = None
         self.template2id = None
         self._compute_template()
-        self.env = FrotzEnv(self.rom_path, self.seed)
+        # Jens: leaving out seed here should get it from the bindings which 
+        # is what the original authors seemed to want to do
 
         self.env_num = env_num
         self.ps = None
@@ -202,13 +206,21 @@ class JerichoEnv:
             return (template_str.replace('OBJ', self.id2word[o1_id], 1)
                     .replace('OBJ', self.id2word[o2_id], 1))
 
-    def get_world_state_hash(self, ignore=False):
+    def get_world_state_hash(self, ignore=True):
         if ignore:
             return self.env.get_world_state_hash()
         return _get_world_state_hash(self.env)
 
     def _identify_objects_on_current_state(self, ob):
-        objs_raw = self.env.identify_interactive_objects(ob)
+        objs_raw = self.env._identify_interactive_objects(ob)
+        objs_raw_list = []
+        for objs in objs_raw.values():
+            temp = set()
+            for obj in objs:
+                temp.add(obj[0])
+            objs_raw_list.append(list(temp))
+        objs_raw = objs_raw_list
+            
         objs_raw = list(itertools.chain.from_iterable(objs_raw))
         objs_raw.sort()
         objs = []
@@ -263,11 +275,11 @@ class JerichoEnv:
             else:
                 obs, rew, done, info = self.env.step(act)
 
-            if self.env.emulator_halted():
+            if self.env._emulator_halted():
                 self.env.reset()
                 continue
 
-            if info['score'] != orig_score or done or self.env.world_changed():
+            if info['score'] != orig_score or done or self.env._world_changed():
                 # Heuristic to ignore actions with side-effect of taking items
                 if '(Taken)' in obs:
                     continue
@@ -302,6 +314,7 @@ class JerichoEnv:
                 valid_acts = self._check_valid_action_parallel(acts)
             else:
                 valid_acts = self._check_valid_action_serial(acts)
+
             # also compute what actions are removed
             # v_acts = [a for subacts in valid_acts for a in subacts]
             # invalid_act = [act for act in acts if act not in v_acts]
@@ -315,7 +328,7 @@ class JerichoEnv:
 
     def step(self, action, confidence=0, parallel=True, compute_actions=True):
         ob, reward, done, info = self.env.step(action)
-        world_changed = self.env.world_changed()
+        world_changed = self.env._world_changed()
         info['world_changed'] = world_changed
         # Initialize with default values
         look = 'unknown'
@@ -330,7 +343,7 @@ class JerichoEnv:
                     save = self.env.get_state()
                     for _ in range(confidence):
                         _, _, _, _ = self.env.step(action)
-                        world_changed = self.env.world_changed()
+                        world_changed = self.env._world_changed()
                         if world_changed:
                             break
                     self.env.set_state(save)
@@ -413,37 +426,37 @@ class JerichoEnv:
             initial_ob) + '|' + clean_obs('look')
         return initial_ob, info
 
-    def align_action_on_current_state(self, target_action, action_groups):
-        state = self.env.get_state()
-        obs, rew, done, info = self.env.step(target_action)
-        target_diff = self.env._get_world_diff()
-        orig_score = info['score']
-        self.env.set_state(state)
-        # print('act_group', action_groups)
-        for id, act in enumerate(action_groups):
-            # the first action as the archetype action
-            act = act[0]
-            template_id = act[1]
-            obj1_id = act[2][0] if len(act[2]) > 0 else None
-            obj2_id = act[2][1] if len(act[2]) > 1 else None
+    # def align_action_on_current_state(self, target_action, action_groups):
+    #     state = self.env.get_state()
+    #     obs, rew, done, info = self.env.step(target_action)
+    #     target_diff = self.env._get_world_diff()
+    #     orig_score = info['score']
+    #     self.env.set_state(state)
+    #     # print('act_group', action_groups)
+    #     for id, act in enumerate(action_groups):
+    #         # the first action as the archetype action
+    #         act = act[0]
+    #         template_id = act[1]
+    #         obj1_id = act[2][0] if len(act[2]) > 0 else None
+    #         obj2_id = act[2][1] if len(act[2]) > 1 else None
 
-            #
-            act_str = self.tmpl_to_str(template_id, obj1_id, obj2_id)
-            obs, rew, done, info = self.env.step(act_str)
-            # if self.env.emulator_halted():
-            #     self.env.reset()
-            #     continue
-            diff = None
-            if info['score'] != orig_score or done or self.env.world_changed():
-                # if '(Taken)' in obs:
-                #     continue
-                diff = self.env._get_world_diff()
+    #         #
+    #         act_str = self.tmpl_to_str(template_id, obj1_id, obj2_id)
+    #         obs, rew, done, info = self.env.step(act_str)
+    #         # if self.env.emulator_halted():
+    #         #     self.env.reset()
+    #         #     continue
+    #         diff = None
+    #         if info['score'] != orig_score or done or self.env.world_changed():
+    #             # if '(Taken)' in obs:
+    #             #     continue
+    #             diff = self.env._get_world_diff()
 
-            if diff == target_diff:
-                self.env.set_state(state)
-                return id
+    #         if diff == target_diff:
+    #             self.env.set_state(state)
+    #             return id
 
-            self.env.set_state(state)
+    #         self.env.set_state(state)
 
-        return -1
+    #     return -1
 
