@@ -36,7 +36,7 @@ version=4
 
 module purge
 eval "$(conda shell.bash hook)"
-if [ ${1} = "zork1.z5" ]; then
+if [ ${2} = "zork1.z5" ]; then
     echo "activating drrn-shunyu-fast"
     conda activate drrn-shunyu-fast
 elif [ ${4} = "add_wt" ]; then
