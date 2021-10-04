@@ -239,7 +239,7 @@ def wrap_imitation_experience_replay(exp_buffer, config, shuffle,
         import multiprocessing
         num_workers = multiprocessing.cpu_count()
         num_workers = int(num_workers - 2)
-        num_workers = 0
+        num_workers = 8
 
     kwargs = ({'num_workers': num_workers, 'pin_memory': True} if config.cuda
               else {'num_workers': num_workers})
@@ -409,7 +409,7 @@ def wrap_experience_replay(exp_buffer, config,
         import multiprocessing
         num_workers = multiprocessing.cpu_count()
         num_workers = int(num_workers - 2)
-        num_workers = 0
+        num_workers = 8
 
     kwargs = ({'num_workers': num_workers, 'pin_memory': True} if config.cuda
               else {'num_workers': num_workers})
