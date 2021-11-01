@@ -1,5 +1,6 @@
 import os
 from jericho.util import clean
+from torch._C import import_ir_module
 from tqdm import tqdm
 import wandb
 import torch
@@ -10,10 +11,13 @@ from datetime import timedelta
 from timeit import default_timer as timer
 import agents
 import utils
+import psutil
 
 
 def train():
     # initialize environments and set up logging folders
+    # import pdb 
+    # pdb.set_trace()
     config = utils.get_rl_args()
     wandb.init(project=f'{config.project_name}', name=config.log_dir.split('/')[-1])
     wandb.config.update(config)

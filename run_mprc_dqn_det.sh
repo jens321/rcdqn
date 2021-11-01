@@ -16,15 +16,15 @@
 # jericho_add_wt="no_add_wt"
 
 # CUSTOM
-GAMES="library.z5"
-jericho_add_wt="add_wt"
+GAMES="dragon.z5"
+jericho_add_wt="mprc_dqn"
 
-SEEDS=(1)
+SEEDS=(0 1 2)
 
 for seed in ${SEEDS[@]}
 do
     for game in ${GAMES} 
     do
-        sbatch -A pnlp --job-name=mprc_dqn_det_${game} run_mprc_dqn_det.slurm mprc_dqn_${game} ${game} ${seed} ${jericho_add_wt} &
+        sbatch -A pnlp --job-name=debug_mem_mprc_dqn_det_${game} run_mprc_dqn_det.slurm mprc_dqn_${game} ${game} ${seed} ${jericho_add_wt} &
     done;
 done;
