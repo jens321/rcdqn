@@ -1,7 +1,11 @@
 import os
 from jericho.util import clean
 from tqdm import tqdm
+import random
+import numpy as np
+import torch
 import time
+import wandb
 from datetime import timedelta
 from timeit import default_timer as timer
 import agents
@@ -11,8 +15,15 @@ import utils
 def train():
     # initialize environments and set up logging folders
     config = utils.get_rl_args()
+    wandb.init(project=f'{config.project_name}', name=config.log_dir.split('/')[-1])
+    wandb.config.update(config)
     rom = config.rom_path.format(config.env_id)
     env = utils.make_env(rom, 0, max_episode_steps=config.env_step_limit)
+
+    # Set seed across imports
+    torch.manual_seed(config.env_seed)
+    np.random.seed(config.env_seed)
+    random.seed(config.env_seed)
 
     frame_idx = 0
     resume_flag = False
@@ -189,7 +200,9 @@ def train():
     loop_length = config.experiment_monitor_freq * config.update_freq
     loop_start = frame_idx // loop_length
     loop_max = int(config.max_steps / loop_length) + 1
+    max_score = 0
     for loop_idx in range(loop_start, loop_max):
+        watch_start = time.time()
         time_start = loop_idx * loop_length
         time_end = time_start + loop_length
         for batch_vars in tqdm(
@@ -206,6 +219,7 @@ def train():
                 frame_idx += 1
             act_time += int(round(time.time() * 1000)) - act_ep_time
 
+        watch_end = time.time()
         model.save_networks()
         model.save_optimizer()
         model.save_replay()
@@ -238,6 +252,10 @@ def train():
                         td_avg, td_max, norm_avg,
                         config.epsilon_by_frame(frame_idx),
                         exp_avg, exp_max, exp_min))
+        max_score = max(max_score, score[1])
+
+        wandb.log({'Step': frame_idx, 'EpisodeScores100': score[0], 'MaxScore': max_score, 'FPS': 8 * loop_length/(watch_end - watch_start)})
+        
         model.print_time_log()
         model.reset_time_log()
         print('- act time:{}'.format(timedelta(milliseconds=act_time)))

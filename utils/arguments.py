@@ -78,6 +78,7 @@ def get_rl_args():
     parser.add_argument('--no_cuda', action='store_true')
     parser.add_argument('--grad_clip', default=10.0, type=float)
     parser.add_argument('--history_window', default=2, type=int)
+    parser.add_argument('--project_name', default='text-games', type=str)
 
     args = parser.parse_args()
 
