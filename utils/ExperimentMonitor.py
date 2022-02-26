@@ -24,7 +24,7 @@ class ExperimentMonitor:
         # action, reward, termination
         self.ard_history = []
         self.last_action_record = {'template': (0, 0, 0), 'obj': (0, 0, 0)}
-        self.episode_reward_length = 10 # 10 ~ 100
+        self.episode_reward_length = 100 # 10 ~ 100
         self.ep_count = 0
         return
 
