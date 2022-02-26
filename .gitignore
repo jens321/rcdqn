@@ -1,1 +1,6 @@
 .DS_Store
+__pycache__/
+glove/
+wandb
+logs/
+slurm_output/
