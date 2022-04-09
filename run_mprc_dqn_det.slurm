@@ -14,10 +14,10 @@
 #SBATCH -N 1 #nodes
 #SBATCH -n 1 #tasks
 #SBATCH --cpus-per-task=16
-#SBATCH --mem=15G
+#SBATCH --mem=70G
 #SBATCH --time=1-23:59:00   
-#SBATCH --gres=gpu:1 
-#SBATCH -w node031
+#SBATCH --gres=gpu:1
+#SBATCH -w node030
 
 # Turn on mail notification. There are many possible self-explaining values:
 # NONE, BEGIN, END, FAIL, ALL (including all aforementioned)
@@ -60,15 +60,15 @@ python3 train.py --env_id ${2} \
                  --batch_size 64 \
                  --env_seed ${3} \
                  --seed ${3} \
-                 --project_name "iclr-text-games" \
+                 --project_name "text-games" \
                  --jericho_add_wt ${4} \
-                 --log_dir logs/debug-original-jericho-${1}
+                 --log_dir logs/${1}
 
-# python3 train.py --env_id dragon.z5 \
+# python3 train.py --env_id zork1.z5 \
 #                  --batch_size 64 \
 #                  --env_seed 0 \
 #                  --seed 0 \
-#                  --project_name "iclr-text-games" \
+#                  --project_name "text-games" \
 #                  --jericho_add_wt add_wt \
 #                  --log_dir logs/mprc-dqn-pdb-debug
 

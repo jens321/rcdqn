@@ -13,10 +13,11 @@
 # Define, how many nodes you need. Here, we ask for 1 node.
 #SBATCH -N 1 #nodes
 #SBATCH -n 1 #tasks
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=11G
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=150G
 #SBATCH --time=0-23:59:00   
 #SBATCH --gres=gpu:1 
+#SBATCH -w node031
 
 # Turn on mail notification. There are many possible self-explaining values:
 # NONE, BEGIN, END, FAIL, ALL (including all aforementioned)
@@ -56,7 +57,7 @@ python3 train.py --env_id ${2} \
                  --batch_size 64 \
                  --env_seed -1 \
                  --seed ${3} \
-                 --project_name "iclr-text-games" \
+                 --project_name "text-games" \
                  --jericho_add_wt ${4} \
                  --log_dir logs/${1}
 

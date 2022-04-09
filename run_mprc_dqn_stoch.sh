@@ -19,7 +19,7 @@
 GAMES="zork1.z5"
 jericho_add_wt="no_add_wt"
 
-SEEDS=(0 1 2)
+SEEDS=(2 1 0)
 
 for seed in ${SEEDS[@]}
 do
